@@ -107,9 +107,9 @@ HELP = '''
 def add_task(date, task, category=None, priority=None):
     date = date.lower()
     if schedule.get(date) is not None:
-        schedule[date].append(task)
+        schedule[date].append([category, priority, task])
     else:
-        schedule[date] = [task]
+        schedule[date] = [[category, priority, task]]
 
 
 @bot.message_handler(commands=['help'])
@@ -119,12 +119,13 @@ def _help(message):
 
 @bot.message_handler(commands=['random'])
 def random(message, print_report=True):
-    task = choice(RANDOM_TASKS)
     day = choice(RANDOM_DAYS)
-    #TODO после изменения add_task, добавить рандомные категории и важности для дел
-    add_task(day, task)
+    category = choice(CATEGORIES)
+    priority = choice(PRIORITIES)
+    task = choice(RANDOM_TASKS)
+    add_task(day, task, category=category, priority=priority)
     if print_report:
-        bot.send_message(message.chat.id, f'Задача {task} добавлена на {day}')
+        bot.send_message(message.chat.id, f'Задача {task} добавлена на {day}, приоритет {priority}, категория {category}')
 
 
 @bot.message_handler(commands=['random_x10'])
@@ -150,6 +151,8 @@ def add(message):
         bot.send_message(message.chat.id, f'Команда без параметров, выполняю сценарий случайной задачи')
         random(message)
 
+#TODO сделать рефактор функций печати: вынести печать единичного таска в отдельную функцию
+#TODO сделать функцию сборки тасков по дню или категории для печати в одном сообщении
 
 @bot.message_handler(commands=['showtoday'])
 def print_today(message):
