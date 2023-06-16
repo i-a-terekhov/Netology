@@ -144,6 +144,11 @@ def random_x10(message):
 
 
 #TODO Выделить обработку регулярками в отдельную функцию, возвражающую либо текст, либо None
+
+
+def message_split(message):
+    
+
 @bot.message_handler(commands=['add'])
 def add(message):
     if " " in message.text:
