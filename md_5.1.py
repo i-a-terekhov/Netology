@@ -5,6 +5,7 @@
 
 import telebot
 from random import choice
+import re
 import pprint
 import token
 
@@ -67,13 +68,13 @@ CATEGORIES = [
     None,
     "Здоровье",
     "Работа",
-    "Личное развитие",
+    "Личное",
     "Семья",
     "Финансы",
     "Хобби",
     "Путешествия",
     "Образование",
-    "Домашние дела",
+    "Домашние",
     "Творчество"
 ]
 PRIORITIES = [
@@ -97,7 +98,7 @@ HELP = '''
 /showtoday  - печать задачи на сегодня
 /showall - печатать все задачи
 /show [дата] - печать задачи на определенный день
-/add [дата] [задача] - добавить задачу
+/add [дата] [задача] [@категория] [@@приоритет] - добавить задачу
 /random - добавить случайную задачу на случайный день
 /random_x10 - добавить 10 случайных задач 
 /help - Напечатать help
@@ -110,6 +111,13 @@ def add_task(date, task, category=None, priority=None):
         schedule[date].append([category, priority, task])
     else:
         schedule[date] = [[category, priority, task]]
+
+
+def loger(message, *args):
+    print("Фиксируем сообщение от пользователя:")
+    print(message.text)
+    print("Полученные арги")
+    print(*args)
 
 
 @bot.message_handler(commands=['help'])
@@ -135,21 +143,27 @@ def random_x10(message):
     bot.send_message(message.chat.id, f'Добавлено 10 случайных задач, посмотреть все задачи /showall')
 
 
+#TODO Выделить обработку регулярками в отдельную функцию, возвражающую либо текст, либо None
 @bot.message_handler(commands=['add'])
 def add(message):
-    if message.text.count(" ") > 1:
-        _, date, tail = message.text.split(maxsplit=2)
-        if len(tail) > 3:
-            task = ' '.join([tail])
-            add_task(date, task)
-            bot.send_message(message.chat.id, f'Задача {task} добавлена на дату {date}')
+    if " " in message.text:
+        mess_text = message.text.split(maxsplit=1)[1]
+        date = re.match(r'[^ ]*', mess_text)
+        task = re.search(r'(?<= )[^@]+(?!@)', mess_text)
+        category = re.search(r'(?<=@)[^@| ]+(?!@)', mess_text)
+        priority = re.search(r'(?<=@@)[^@| ]+(?!@)', mess_text)
+
+        loger(message, date.group(0), task, category, priority)
+
+        if date is None or task is None:
+            bot.send_message(message.chat.id, f'Формат команды некорректный, попробуйте еще раз')
+        elif len(task.group(0)) > 3:
+            add_task(date.group(0), task.group(0), category=category, priority=priority)
+            bot.send_message(message.chat.id, f'На {date} добавлена задача {task} с категорией {category} и приоритетом {priority}')
         else:
             bot.send_message(message.chat.id, f'Описание задачи слишком короткое, попробуйте еще раз')
-    elif message.text.count(" ") == 1:
-        bot.send_message(message.chat.id, f'Формат команды некорректный, попробуйте еще раз')
     else:
-        bot.send_message(message.chat.id, f'Команда без параметров, выполняю сценарий случайной задачи')
-        random(message)
+        bot.send_message(message.chat.id, f'Формат команды некорректный, не найдены пробелы')
 
 #TODO сделать рефактор функций печати: вынести печать единичного таска в отдельную функцию
 #TODO сделать функцию сборки тасков по дню или категории для печати в одном сообщении
