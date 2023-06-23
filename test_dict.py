@@ -82,7 +82,7 @@ RANDOM_PRIORITIES = [
 
 schedule = {}
 
-for _ in range(100):
+for _ in range(10):
     date = choice(RANDOM_DAYS)
     task = choice(RANDOM_TASKS)
     category = choice(RANDOM_CATEGORIES)

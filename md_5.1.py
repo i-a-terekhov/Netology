@@ -191,18 +191,29 @@ def add(message):
                          f'На {date} добавлена задача {task} с категорией {category} и приоритетом {priority}')
 
 
-#TODO сделать функцию сборки тасков по дню или категории для печати в одном сообщении
+def print_one_day(date, message):
+    if date in schedule:
+        tasks = f'Задачи на {date}:\n'
+        for task in schedule[date]:
+            if task["category"] is not None:
+                category = f' @{task["category"]}'
+            else:
+                category = ""
+            if task["priority"] is not None:
+                priority = f' @@{task["priority"]}'
+            else:
+                priority = ""
+
+            tasks += f'- {task["task"]}{category}{priority}\n'
+    else:
+        tasks = f'На дату {date} нет задач'
+    bot.send_message(message.chat.id, tasks)
+
 
 @bot.message_handler(commands=['showtoday'])
 def print_today(message):
     date = "сегодня"
-    if date in schedule:
-        tasks = f'Задачи на {date}:\n'
-        for task in schedule[date]:
-            tasks += f'- {task}\n'
-    else:
-        tasks = 'На сегодня нет задач'
-    bot.send_message(message.chat.id, tasks)
+    print_one_day(date=date, message=message)
 
 
 @bot.message_handler(commands=['showall'])
@@ -211,27 +222,16 @@ def print_all(message):
     if len(exsist_days) == 0:
         bot.send_message(message.chat.id, "Задач нет во всем календаре")
     for date in exsist_days:
-        tasks = f'Задачи на {date}:\n'
-        for task in schedule[date]:
-            tasks += f'- {task}\n'
-        bot.send_message(message.chat.id, tasks)
-    pprint.pprint(schedule)
+        print_one_day(date=date, message=message)
 
 
 @bot.message_handler(commands=['show'])
 def print_some_days(message):
     if message.text.count(" ") >= 1:
         dates = message.text.split()
-        print(dates)
         dates = dates[1:]
         for date in dates:
-            if date in schedule:
-                tasks = f'Задачи на {date}:\n'
-                for task in schedule[date]:
-                    tasks += f'- {task}\n'
-            else:
-                tasks = f'На дату {date} нет задач'
-            bot.send_message(message.chat.id, tasks)
+            print_one_day(date=date, message=message)
     else:
         tasks = 'Некорректный запрос'
         bot.send_message(message.chat.id, tasks)
